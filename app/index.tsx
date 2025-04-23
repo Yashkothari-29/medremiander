@@ -1,68 +1,22 @@
-import { View, Text, StyleSheet, Animated } from "react-native";
-import { Ionicons } from "@expo/vector-icons";
-import { useRouter } from "expo-router";
-import { useEffect, useRef } from "react";
+import { View, Text, TouchableOpacity } from 'react-native';
+import { useRouter } from 'expo-router';
 
-export default function SplashScreen() {
+export default function Index() {
   const router = useRouter();
-  const fadeAnim = useRef(new Animated.Value(0)).current;
-  const scaleAnim = useRef(new Animated.Value(0.5)).current;
-
-  useEffect(() => {
-    Animated.parallel([
-      Animated.timing(fadeAnim, {
-        toValue: 1,
-        duration: 1000,
-        useNativeDriver: true,
-      }),
-      Animated.spring(scaleAnim, {
-        toValue: 1,
-        tension: 10,
-        friction: 2,
-        useNativeDriver: true,
-      }),
-    ]).start();
-
-    const timer = setTimeout(() => {
-      router.replace("/auth");
-    }, 2000);
-
-    return () => clearTimeout(timer);
-  }, []);
 
   return (
-    <View style={styles.container}>
-      <Animated.View
-        style={[
-          styles.iconContainer,
-          {
-            opacity: fadeAnim,
-            transform: [{ scale: scaleAnim }],
-          },
-        ]}
+    <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#4CAF50' }}>
+      <Text style={{ color: 'white', fontSize: 24, marginBottom: 20 }}>Welcome to MedRemind</Text>
+      <TouchableOpacity 
+        onPress={() => router.push('/auth')}
+        style={{
+          backgroundColor: 'white',
+          padding: 15,
+          borderRadius: 8,
+        }}
       >
-        <Ionicons name="medical" size={100} color="white" />
-        <Text style={styles.appName}>MedRemind</Text>
-      </Animated.View>
+        <Text style={{ color: '#4CAF50', fontSize: 16 }}>Go to Login</Text>
+      </TouchableOpacity>
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: "#4CAF50",
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  iconContainer: {
-    alignItems: "center",
-  },
-  appName: {
-    color: "white",
-    fontSize: 32,
-    fontWeight: "bold",
-    marginTop: 20,
-    letterSpacing: 1,
-  },
-});

@@ -1,50 +1,89 @@
-# Welcome to your Expo app 👋
+# MedRemind - Medicine Reminder App
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+A comprehensive medicine reminder application built with React Native and Expo, featuring AI-powered health assistance using Google's Gemini API.
 
-## Get started
+## Features
 
-1. Install dependencies
+- Medicine scheduling and reminders
+- AI-powered health assistant using Gemini API
+- Secure authentication system
+- Medication tracking and history
+- Refill reminders
+- Calendar view for medication schedule
+- Push notifications for reminders
 
-   ```bash
-   npm install
-   ```
+## Tech Stack
 
-2. Start the app
+- React Native with Expo
+- TypeScript
+- MongoDB for database
+- Google Gemini API for AI assistance
+- Expo Router for navigation
+- Expo Notifications for reminders
 
-   ```bash
-    npx expo start
-   ```
+## Prerequisites
 
-In the output, you'll find options to open the app in a
+- Node.js (v14 or newer)
+- npm or yarn
+- Expo CLI
+- MongoDB (local or remote instance)
+- Google Gemini API key
 
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
+## Installation
 
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
-
-## Get a fresh project
-
-When you're ready, run:
-
+1. Clone the repository:
 ```bash
-npm run reset-project
+git clone <repository-url>
+cd medicine-reminder-app
 ```
 
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
+2. Install dependencies:
+```bash
+npm install
+```
 
-## Learn more
+3. Create a `.env` file in the root directory and add your environment variables:
+```
+MONGODB_URI=your_mongodb_connection_string
+EXPO_PUBLIC_GEMINI_API_KEY=your_gemini_api_key
+```
 
-To learn more about developing your project with Expo, look at the following resources:
+4. Start the development server:
+```bash
+npm start
+```
 
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
+5. Start the backend server:
+```bash
+cd backend
+npm install
+npm start
+```
 
-## Join the community
+## Project Structure
 
-Join our community of developers creating universal apps.
+- `/app` - Main application screens and navigation
+- `/components` - Reusable React components
+- `/config` - Configuration files
+- `/utils` - Utility functions
+- `/backend` - Backend server code
+- `/models` - Database models
+- `/assets` - Images and other static assets
 
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+## Contributing
+
+1. Fork the repository
+2. Create your feature branch (`git checkout -b feature/AmazingFeature`)
+3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
+4. Push to the branch (`git push origin feature/AmazingFeature`)
+5. Open a Pull Request
+
+## License
+
+This project is licensed under the MIT License - see the LICENSE file for details.
+
+## Acknowledgments
+
+- Google Gemini API for AI capabilities
+- Expo team for the amazing framework
+- MongoDB for the database solution

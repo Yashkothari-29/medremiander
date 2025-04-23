@@ -5,20 +5,31 @@ import {
   StyleSheet,
   TouchableOpacity,
   Dimensions,
-  Image,
+  TextInput,
+  KeyboardAvoidingView,
+  Platform,
+  ScrollView,
 } from "react-native";
 import { useRouter } from "expo-router";
 import * as LocalAuthentication from "expo-local-authentication";
 import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { UserModel } from "../models/User";
+import bcrypt from "react-native-bcrypt";
+import 'react-native-get-random-values';
 
 const { width } = Dimensions.get("window");
 
-export default function AuthScreen() {
+function AuthScreen() {
   const router = useRouter();
   const [isAuthenticating, setIsAuthenticating] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [hasBiometrics, setHasBiometrics] = useState(false);
+  const [isLogin, setIsLogin] = useState(true);
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [name, setName] = useState("");
 
   useEffect(() => {
     checkBiometrics();
@@ -30,22 +41,75 @@ export default function AuthScreen() {
     setHasBiometrics(hasHardware && isEnrolled);
   };
 
+  const handleLogin = async () => {
+    try {
+      setIsAuthenticating(true);
+      setError(null);
+
+      const user = await UserModel.findOne(email);
+      if (!user) {
+        setError("User not found");
+        return;
+      }
+
+      const isPasswordValid = bcrypt.compareSync(password, user.password);
+      if (!isPasswordValid) {
+        setError("Invalid password");
+        return;
+      }
+
+      await AsyncStorage.setItem("user", JSON.stringify(user));
+      router.replace("/home");
+    } catch (err) {
+      setError("Login failed. Please try again.");
+      console.error(err);
+    } finally {
+      setIsAuthenticating(false);
+    }
+  };
+
+  const handleSignup = async () => {
+    try {
+      setIsAuthenticating(true);
+      setError(null);
+
+      const existingUser = await UserModel.findOne(email);
+      if (existingUser) {
+        setError("Email already registered");
+        return;
+      }
+
+      const salt = bcrypt.genSaltSync(10);
+      const hashedPassword = bcrypt.hashSync(password, salt);
+      
+      const newUser = await UserModel.create({
+        email,
+        password: hashedPassword,
+        name,
+      });
+
+      if (!newUser) {
+        setError("Failed to create user");
+        return;
+      }
+
+      await AsyncStorage.setItem("user", JSON.stringify(newUser));
+      router.replace("/home");
+    } catch (err) {
+      setError("Signup failed. Please try again.");
+      console.error(err);
+    } finally {
+      setIsAuthenticating(false);
+    }
+  };
+
   const authenticate = async () => {
     try {
       setIsAuthenticating(true);
       setError(null);
 
-      // Check if device has biometric hardware
-      const hasHardware = await LocalAuthentication.hasHardwareAsync();
-      const supportedTypes =
-        await LocalAuthentication.supportedAuthenticationTypesAsync();
-      const hasBiometrics = await LocalAuthentication.isEnrolledAsync();
-
       const auth = await LocalAuthentication.authenticateAsync({
-        promptMessage:
-          hasHardware && hasBiometrics
-            ? "Use Face ID or Touch ID"
-            : "Enter your PIN to access MedRemind",
+        promptMessage: "Use Face ID or Touch ID",
         fallbackLabel: "Use PIN",
         cancelLabel: "Cancel",
         disableDeviceFallback: false,
@@ -66,57 +130,108 @@ export default function AuthScreen() {
 
   return (
     <LinearGradient colors={["#4CAF50", "#2E7D32"]} style={styles.container}>
-      <View style={styles.content}>
-        <View style={styles.iconContainer}>
-          <Ionicons name="medical" size={80} color="white" />
-        </View>
-
-        <Text style={styles.title}>MedRemind</Text>
-        <Text style={styles.subtitle}>Your Personal Medication Assistant</Text>
-
-        <View style={styles.card}>
-          <Text style={styles.welcomeText}>Welcome Back!</Text>
-          <Text style={styles.instructionText}>
-            {hasBiometrics
-              ? "Use Face ID/Touch ID or PIN to access your medications"
-              : "Enter your PIN to access your medications"}
-          </Text>
-
-          <TouchableOpacity
-            style={[styles.button, isAuthenticating && styles.buttonDisabled]}
-            onPress={authenticate}
-            disabled={isAuthenticating}
-          >
-            <Ionicons
-              name={hasBiometrics ? "finger-print-outline" : "keypad-outline"}
-              size={24}
-              color="white"
-              style={styles.buttonIcon}
-            />
-            <Text style={styles.buttonText}>
-              {isAuthenticating
-                ? "Verifying..."
-                : hasBiometrics
-                ? "Authenticate"
-                : "Enter PIN"}
-            </Text>
-          </TouchableOpacity>
-
-          {error && (
-            <View style={styles.errorContainer}>
-              <Ionicons name="alert-circle" size={20} color="#f44336" />
-              <Text style={styles.errorText}>{error}</Text>
+      <KeyboardAvoidingView
+        behavior={Platform.OS === "ios" ? "padding" : "height"}
+        style={styles.container}
+      >
+        <ScrollView contentContainerStyle={styles.scrollContent}>
+          <View style={styles.content}>
+            <View style={styles.iconContainer}>
+              <Ionicons name="medical" size={80} color="white" />
             </View>
-          )}
-        </View>
-      </View>
+
+            <Text style={styles.title}>MedRemind</Text>
+            <Text style={styles.subtitle}>Your Personal Medication Assistant</Text>
+
+            <View style={styles.card}>
+              <Text style={styles.welcomeText}>
+                {isLogin ? "Welcome Back!" : "Create Account"}
+              </Text>
+
+              {!isLogin && (
+                <TextInput
+                  style={styles.input}
+                  placeholder="Full Name"
+                  value={name}
+                  onChangeText={setName}
+                  autoCapitalize="words"
+                />
+              )}
+
+              <TextInput
+                style={styles.input}
+                placeholder="Email"
+                value={email}
+                onChangeText={setEmail}
+                keyboardType="email-address"
+                autoCapitalize="none"
+              />
+
+              <TextInput
+                style={styles.input}
+                placeholder="Password"
+                value={password}
+                onChangeText={setPassword}
+                secureTextEntry
+              />
+
+              <TouchableOpacity
+                style={[styles.button, isAuthenticating && styles.buttonDisabled]}
+                onPress={isLogin ? handleLogin : handleSignup}
+                disabled={isAuthenticating}
+              >
+                <Text style={styles.buttonText}>
+                  {isAuthenticating
+                    ? "Processing..."
+                    : isLogin
+                    ? "Login"
+                    : "Sign Up"}
+                </Text>
+              </TouchableOpacity>
+
+              {hasBiometrics && isLogin && (
+                <TouchableOpacity
+                  style={styles.biometricButton}
+                  onPress={authenticate}
+                >
+                  <Ionicons name="finger-print-outline" size={24} color="#4CAF50" />
+                  <Text style={styles.biometricText}>Use Biometrics</Text>
+                </TouchableOpacity>
+              )}
+
+              <TouchableOpacity
+                style={styles.switchButton}
+                onPress={() => setIsLogin(!isLogin)}
+              >
+                <Text style={styles.switchText}>
+                  {isLogin
+                    ? "Don't have an account? Sign Up"
+                    : "Already have an account? Login"}
+                </Text>
+              </TouchableOpacity>
+
+              {error && (
+                <View style={styles.errorContainer}>
+                  <Ionicons name="alert-circle" size={20} color="#f44336" />
+                  <Text style={styles.errorText}>{error}</Text>
+                </View>
+              )}
+            </View>
+          </View>
+        </ScrollView>
+      </KeyboardAvoidingView>
     </LinearGradient>
   );
 }
 
+export default AuthScreen;
+
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+  },
+  scrollContent: {
+    flexGrow: 1,
   },
   content: {
     flex: 1,
@@ -167,13 +282,17 @@ const styles = StyleSheet.create({
     fontSize: 24,
     fontWeight: "bold",
     color: "#333",
-    marginBottom: 10,
+    marginBottom: 20,
   },
-  instructionText: {
+  input: {
+    width: "100%",
+    height: 50,
+    borderWidth: 1,
+    borderColor: "#ddd",
+    borderRadius: 8,
+    paddingHorizontal: 15,
+    marginBottom: 15,
     fontSize: 16,
-    color: "#666",
-    textAlign: "center",
-    marginBottom: 30,
   },
   button: {
     backgroundColor: "#4CAF50",
@@ -181,20 +300,35 @@ const styles = StyleSheet.create({
     paddingHorizontal: 30,
     borderRadius: 12,
     width: "100%",
-    flexDirection: "row",
     alignItems: "center",
-    justifyContent: "center",
+    marginTop: 10,
   },
   buttonDisabled: {
     opacity: 0.7,
-  },
-  buttonIcon: {
-    marginRight: 10,
   },
   buttonText: {
     color: "white",
     fontSize: 16,
     fontWeight: "600",
+  },
+  biometricButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginTop: 20,
+    padding: 10,
+  },
+  biometricText: {
+    color: "#4CAF50",
+    marginLeft: 10,
+    fontSize: 16,
+    fontWeight: "600",
+  },
+  switchButton: {
+    marginTop: 20,
+  },
+  switchText: {
+    color: "#4CAF50",
+    fontSize: 14,
   },
   errorContainer: {
     flexDirection: "row",
