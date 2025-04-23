@@ -1,5 +1,7 @@
 # MedRemind - Medicine Reminder App
 
+![Development Status](https://img.shields.io/badge/Status-In%20Development-brightgreen)
+
 A comprehensive medicine reminder application built with React Native and Expo, featuring AI-powered health assistance using Google's Gemini API.
 
 ## Features
